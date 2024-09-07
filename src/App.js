@@ -1,24 +1,24 @@
-import logo from './logo.svg';
 import './App.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import AppointmentCalendar from './component/AppointmentCalendar';
+import Home from './component/Home';
+import Sidebar from './component/Sidebar'; // Import Sidebar
+import PatientList from './component/PatientList ';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <div style={{ display: 'flex' }}> {/* Use flexbox to layout the Sidebar and main content */}
+        <Sidebar />
+        <div style={{ padding: '20px', flex: 1 }}> {/* Main content area */}
+          <Routes>
+            <Route path="/calendar" element={<AppointmentCalendar />} />
+            <Route path="/overview" element={<Home />} />
+              <Route path="/patients" element={<PatientList/>} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
   );
 }
 
