@@ -1,17 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Calendar, momentLocalizer } from "react-big-calendar";
+import moment from "moment";
+import "react-big-calendar/lib/css/react-big-calendar.css";
 import {
-  Menu, MenuItem, IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Button
-} from '@mui/material';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { DndProvider, useDrag } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'; // Drag-and-drop addon
-import base_url from '../api/bootapi'; // Adjust the import based on your file structure
+  Menu,
+  MenuItem,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+} from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { DndProvider, useDrag } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop"; // Drag-and-drop addon
+import base_url from "../api/bootapi"; // Adjust the import based on your file structure
+import dayjs from "dayjs";
+import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"; // Import the adapter
 
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(Calendar); // Wrap Calendar with drag-and-drop functionality
@@ -28,37 +38,47 @@ const Event = ({ event, onUpdate, onDelete }) => {
     setAnchorEl(null);
   };
 
-  const startTime = moment(event.start).format('HH:mm');
-  const endTime = moment(event.end).format('HH:mm');
+  const startTime = moment(event.start).format("HH:mm");
+  const endTime = moment(event.end).format("HH:mm");
 
   return (
     <div
       style={{
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        padding: '10px',
-        display: 'flex',
-        flexDirection: 'column',
-        width: '180px',
-        position: 'relative'
+        backgroundColor: "white",
+        borderRadius: "8px",
+        padding: "10px",
+        display: "flex",
+        flexDirection: "column",
+        width: "180px",
+        position: "relative",
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <div>
-          <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'black' }}>{event.name}</div>
-          <div style={{ fontSize: '11px',color: '#3b82f6' }}>{event.title}</div>
+          <div style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>
+            {event.name}
+          </div>
+          <div style={{ fontSize: "11px", color: "#3b82f6" }}>
+            {event.title}
+          </div>
         </div>
         <IconButton
-          aria-controls={open ? 'event-menu' : undefined}
+          aria-controls={open ? "event-menu" : undefined}
           aria-haspopup="true"
-          aria-expanded={open ? 'true' : undefined}
+          aria-expanded={open ? "true" : undefined}
           onClick={handleClick}
           size="small"
         >
           <MoreVertIcon />
         </IconButton>
       </div>
-      <div style={{ color: '#6b7280', fontSize: '10px', marginTop: '4px' }}>
+      <div style={{ color: "#6b7280", fontSize: "10px", marginTop: "4px" }}>
         {startTime} - {endTime}
       </div>
 
@@ -68,11 +88,25 @@ const Event = ({ event, onUpdate, onDelete }) => {
         open={open}
         onClose={handleClose}
         MenuListProps={{
-          'aria-labelledby': 'event-menu-button',
+          "aria-labelledby": "event-menu-button",
         }}
       >
-        <MenuItem onClick={() => { onUpdate(event); handleClose(); }}>Update</MenuItem>
-        <MenuItem onClick={() => { onDelete(event.id); handleClose(); }}>Delete</MenuItem>
+        <MenuItem
+          onClick={() => {
+            onUpdate(event);
+            handleClose();
+          }}
+        >
+          Update
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            onDelete(event.id);
+            handleClose();
+          }}
+        >
+          Delete
+        </MenuItem>
       </Menu>
     </div>
   );
@@ -82,12 +116,18 @@ const AppointmentCalendar = () => {
   const [appointments, setAppointments] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [formData, setFormData] = useState({ name: '', title: '', date: '' });
+  const [formData, setFormData] = useState({ name: "", title: "", date: "" });
+
+  const [newEvent, setNewEvent] = useState({
+    appointmentDateAndTime: null, // Initialize with null or a date object
+    // ...other fields
+  });
 
   useEffect(() => {
-    axios.get(`${base_url}/api/appointments`)
+    axios
+      .get(`${base_url}/api/appointments`)
       .then((response) => {
-        const events = response.data.map(appointment => {
+        const events = response.data.map((appointment) => {
           const start = new Date(appointment.appointmentDateAndTime);
           const end = new Date(start);
           end.setHours(start.getHours() + 1);
@@ -96,13 +136,13 @@ const AppointmentCalendar = () => {
             title: appointment.title,
             name: appointment.name,
             start: start,
-            end: end
+            end: end,
           };
         });
         setAppointments(events);
       })
       .catch((error) => {
-        console.error('There was an error fetching the appointments!', error);
+        console.error("There was an error fetching the appointments!", error);
       });
   }, []);
 
@@ -111,7 +151,7 @@ const AppointmentCalendar = () => {
     setFormData({
       name: event.name,
       title: event.title,
-      date: moment(event.start).format('YYYY-MM-DDTHH:mm')
+      date: moment(event.start).format("YYYY-MM-DDTHH:mm"),
     });
     setOpenDialog(true);
   };
@@ -132,30 +172,34 @@ const AppointmentCalendar = () => {
       title: formData.title,
       start: new Date(formData.date),
       end: new Date(new Date(formData.date).getTime() + 60 * 60 * 1000),
-      appointmentDateAndTime: new Date(formData.date)
+      appointmentDateAndTime: new Date(formData.date),
     };
 
-    axios.put(`${base_url}/api/update-event`, updatedEvent)
+    axios
+      .put(`${base_url}/api/update-event`, updatedEvent)
       .then(() => {
-        setAppointments(prevAppointments =>
-          prevAppointments.map(event => event.id === updatedEvent.id ? updatedEvent : event)
+        setAppointments((prevAppointments) =>
+          prevAppointments.map((event) =>
+            event.id === updatedEvent.id ? updatedEvent : event
+          )
         );
         handleCloseDialog();
       })
       .catch((error) => {
-        console.error('There was an error updating the event!', error);
+        console.error("There was an error updating the event!", error);
       });
   };
 
   const handleDeleteEvent = (id) => {
-    axios.delete(`${base_url}/api/delete-event/${id}`)
+    axios
+      .delete(`${base_url}/api/delete-event/${id}`)
       .then(() => {
-        setAppointments(prevAppointments =>
-          prevAppointments.filter(event => event.id !== id)
+        setAppointments((prevAppointments) =>
+          prevAppointments.filter((event) => event.id !== id)
         );
       })
       .catch((error) => {
-        console.error('There was an error deleting the event!', error);
+        console.error("There was an error deleting the event!", error);
       });
   };
 
@@ -178,24 +222,29 @@ const AppointmentCalendar = () => {
   //     });
   // };
   const handleEventDrop = ({ event, start, end }) => {
-  const updatedEvent = {
-    ...event,
-    appointmentDateAndTime: start, // Set the updated start time as appointmentDateAndTime
-    start: start,
-    end: end
+    const updatedEvent = {
+      ...event,
+      appointmentDateAndTime: start, // Set the updated start time as appointmentDateAndTime
+      start: start,
+      end: end,
+    };
+
+    axios
+      .put(`${base_url}/api/update-event`, updatedEvent)
+      .then(() => {
+        setAppointments((prevAppointments) =>
+          prevAppointments.map((e) =>
+            e.id === updatedEvent.id ? updatedEvent : e
+          )
+        );
+      })
+      .catch((error) => {
+        console.error(
+          "There was an error updating the event after drag!",
+          error
+        );
+      });
   };
-
-  axios.put(`${base_url}/api/update-event`, updatedEvent)
-    .then(() => {
-      setAppointments(prevAppointments =>
-        prevAppointments.map(e => e.id === updatedEvent.id ? updatedEvent : e)
-      );
-    })
-    .catch((error) => {
-      console.error('There was an error updating the event after drag!', error);
-    });
-};
-
 
   return (
     <div>
@@ -208,10 +257,17 @@ const AppointmentCalendar = () => {
           endAccessor="end"
           style={{ height: 650 }}
           defaultView="month"
+          views={["month"]}
           selectable
           onEventDrop={handleEventDrop} // Handle drop event
           components={{
-            event: (props) => <Event {...props} onUpdate={handleUpdateEvent} onDelete={handleDeleteEvent} />
+            event: (props) => (
+              <Event
+                {...props}
+                onUpdate={handleUpdateEvent}
+                onDelete={handleDeleteEvent}
+              />
+            ),
           }}
         />
       </DndProvider>
@@ -235,24 +291,38 @@ const AppointmentCalendar = () => {
             fullWidth
             value={formData.title}
             onChange={handleFormChange}
+            sx={{ mb: 2 }}
           />
-          <TextField
-            margin="dense"
-            label="Date and Time"
-            type="datetime-local"
-            name="date"
-            fullWidth
-            value={formData.date}
-            onChange={handleFormChange}
-          />
+
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              label="Date and Time"
+              ampm={true} // Enables AM/PM option
+              value={formData.date ? dayjs(formData.date) : null} // Ensure value is a Day.js object
+              onChange={(newValue) => {
+                setNewEvent({ ...newEvent, appointmentDateAndTime: newValue });
+                handleFormChange({
+                  target: {
+                    name: "date",
+                    value: newValue ? newValue.toISOString() : null,
+                  },
+                }); // Update the formData state as well
+              }}
+              renderInput={(params) => <TextField fullWidth {...params} />}
+            />
+          </LocalizationProvider>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">Cancel</Button>
-          <Button onClick={handleFormSubmit} color="primary">Update</Button>
+          <Button onClick={handleCloseDialog} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleFormSubmit} color="primary">
+            Update
+          </Button>
         </DialogActions>
       </Dialog>
     </div>
   );
-}
+};
 
 export default AppointmentCalendar;

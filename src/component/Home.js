@@ -1,22 +1,24 @@
 import React, { useState } from "react";
-import axios from "axios"; // Import Axios
+import axios from "axios";
 import { Box, Typography, TextField, Button, Container } from "@mui/material";
-import Logo from "../assets/NirmiteeLogo.jpg";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"; // Import the adapter
+import dayjs from "dayjs";
+import Swal from "sweetalert2"; // Import SweetAlert
 import base_url from "../api/bootapi";
+
 const Home = () => {
   const [newEvent, setNewEvent] = useState({
     name: "",
     title: "",
-    appointmentDateAndTime: "",
+    appointmentDateAndTime: dayjs(),
   });
 
-  // Handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const formattedDate = new Date(
-      newEvent.appointmentDateAndTime
-    ).toISOString();
+    const formattedDate = newEvent.appointmentDateAndTime.toISOString();
 
     const eventToSend = {
       ...newEvent,
@@ -27,13 +29,29 @@ const Home = () => {
       await axios.post(`${base_url}/api/add-event`, eventToSend);
       console.log("Appointment saved:", eventToSend);
 
+      // Show SweetAlert on success
+      Swal.fire({
+        icon: "success",
+        title: "Appointment Saved!",
+        text: "Your appointment has been successfully added.",
+        confirmButtonText: "OK",
+      });
+
       setNewEvent({
         name: "",
         title: "",
-        appointmentDateAndTime: "",
+        appointmentDateAndTime: dayjs(),
       });
     } catch (error) {
       console.error("There was an error saving the appointment:", error);
+
+      // Show SweetAlert on error
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Something went wrong! Please try again later.",
+        confirmButtonText: "OK",
+      });
     }
   };
 
@@ -57,7 +75,7 @@ const Home = () => {
         </Typography>
         <Typography
           variant="body1"
-          fontWeight="bold" 
+          fontWeight="bold"
           color="grey.700"
           sx={{ whiteSpace: "nowrap" }}
         >
@@ -83,21 +101,23 @@ const Home = () => {
             fullWidth
             label="Title"
             value={newEvent.title}
+            sx={{ mb: 4 }}
             onChange={(e) =>
               setNewEvent({ ...newEvent, title: e.target.value })
             }
           />
-         <TextField
-          margin="normal"
-           required
-            fullWidth
-            type="datetime-local"
-              value={newEvent.appointmentDateAndTime}
-               onChange={(e) =>
-               setNewEvent({ ...newEvent, appointmentDateAndTime: e.target.value })
-                  }
-                   />
 
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              label="Appointment Date and Time"
+              ampm={true} // Enables AM/PM option
+              value={newEvent.appointmentDateAndTime}
+              onChange={(newValue) =>
+                setNewEvent({ ...newEvent, appointmentDateAndTime: newValue })
+              }
+              renderInput={(params) => <TextField fullWidth {...params} />}
+            />
+          </LocalizationProvider>
 
           <Box sx={{ mt: 2 }}>
             <Button type="submit" variant="contained" color="primary" fullWidth>
